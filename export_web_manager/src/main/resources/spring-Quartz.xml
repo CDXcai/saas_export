@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+    <description>Quartz与Spring整合</description>
+
+    <!--配置job：将定时执行的类交给spring容器管理-->
+    <bean id="myJob" class="com.cdx.controller.Job.MyJob"></bean>
+
+    <!--查询报运状态-->
+    <bean id="jobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+        <!--定时任务类-->
+        <property name="targetObject" ref="myJob"></property>
+        <!--定时任务执行的方法-->
+        <property name="targetMethod" value="queryExport"></property>
+    </bean>
+    <!--配置触发器-->
+    <bean id="triggerQueryExport" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+        <!--执行jobDatail-->
+        <property name="jobDetail" ref="jobDetail"></property>
+        <!--cron时间表达式,每20秒执行一次-->
+        <property name="cronExpression" value="0/20 * * * * ? *"></property>
+    </bean>
+
+
+
+    <!--配置调度容器-->
+    <bean id="scheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+        <property name="triggers">
+            <array>
+                <!--指向一个触发器-->
+                <!--<ref bean="trigger"></ref>-->
+                <ref bean="triggerQueryExport"></ref>
+            </array>
+        </property>
+    </bean>
+
+
+
+
+
+</beans>

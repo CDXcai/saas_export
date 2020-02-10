@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+    <!--扫描包-->
+    <context:component-scan base-package="com.cdx.controller"></context:component-scan>
+    <!--加载mvc驱动-->
+    <mvc:annotation-driven conversion-service="conversionService"></mvc:annotation-driven>
+    <!--视图解析器-->
+    <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/pages/"></property>
+        <property name="suffix" value=".jsp"></property>
+    </bean>
+
+    <!--开启对AOP的支持-->
+    <aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+
+
+    <!--安全管理器-->
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <property name="realm" ref="authRealm"/><!-- 引用自定义的realm -->
+    </bean>
+
+
+    <!--dubbo整合spring服务消费者-->
+    <!--1.应用名称-->
+    <dubbo:application name="export_web_manager"></dubbo:application>
+    <!--2.注册中心-->
+    <dubbo:registry address="zookeeper://192.168.73.196:2181"></dubbo:registry>
+    <!--3.配置dubbo注解的包扫描-->
+    <dubbo:annotation package="com.cdx.controller"></dubbo:annotation>
+
+    <dubbo:consumer retries="0" check="false"></dubbo:consumer>
+
+
+    <!--配置日期转化器-->
+    <!--配置日期转化器-->
+    <bean id="conversionService" class="org.springframework.context.support.ConversionServiceFactoryBean">
+        <property name="converters">
+            <list>
+                <bean class="com.cdx.converter.MyStringToDataConverter"></bean>
+            </list>
+        </property>
+    </bean>
+    <!--配置文件上传,id名称必须唯一-->
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <!--配置文件的最大字节,5M-->
+        <property name="maxUploadSize" value="5242880"></property>
+    </bean>
+
+    <!--引入七牛云配置文件-->
+    <context:property-placeholder location="classpath:properties/qiniu.properties"></context:property-placeholder>
+</beans>

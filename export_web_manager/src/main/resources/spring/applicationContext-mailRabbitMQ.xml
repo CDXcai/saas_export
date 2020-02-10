@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/rabbit http://www.springframework.org/schema/rabbit/spring-rabbit.xsd">
+    <!--包扫描: 此处不需要扫包-->
+    <!--<context:component-scan base-package="com.itheima"></context:component-scan>-->
+
+    <!-- 公共部分 -->
+    <!-- 创建连接类 连接安装好的 rabbitmq -->
+    <bean id="connectionFactory"  class="org.springframework.amqp.rabbit.connection.CachingConnectionFactory">
+        <property name="virtualHost" value="testhosts"></property>
+        <!-- username,访问RabbitMQ服务器的账户,默认是guest -->
+        <property name="username" value="admin" />
+        <!-- username,访问RabbitMQ服务器的密码,默认是guest -->
+        <property name="password" value="admin" />
+        <!-- host,RabbitMQ服务器地址，默认值"localhost" -->
+        <property name="host" value="127.0.0.1" />
+        <!-- port，RabbitMQ服务端口，默认值为5672 -->
+        <property name="port" value="5672" />
+    </bean>
+    <!--定义mq管理工厂-->
+    <rabbit:admin connection-factory="connectionFactory"/>
+
+
+    <!--配置队列  durable="true" 表示消息需要持久化 即服务器崩溃会数据不会丢失 auto-delete="false" 表示服务器停止后数据是否自动删除  exclusive:表示该消息队列是否只在当前connection生效。默认false。 -->
+    <rabbit:queue id="sendEmail"  name="sendEmailQueue" durable="true" auto-delete="false" exclusive="false" />
+
+    <!--交换机
+        定义消息队列,durable:是否持久化，如果想在RabbitMQ退出或崩溃的时候，不会失去所有的queue和消息，需要同时标志队列(queue)和交换机(exchange)是持久化的，即rabbit:queue标签和rabbit:direct-exchange中的durable=true,而消息(message)默认是持久化的可以看类org.springframework.amqp.core.MessageProperties中的属性public static final MessageDeliveryMode DEFAULT_DELIVERY_MODE = MessageDeliveryMode.PERSISTENT;exclusive: 仅创建者可以使用的私有队列，断开后自动删除；auto_delete: 当所有消费客户端连接断开后，是否自动删除队列
+        绑定队列,rabbitmq的exchangeType常用的三种模式：direct，fanout，topic三种,我们用direct模式，即rabbit:direct-exchange标签，Direct交换器很简单，如果是Direct类型，就会将消息中的RoutingKey与该Exchange关联的所有Binding中的BindingKey进行比较，如果相等，则发送到该Binding对应的Queue中。有一个需要注意的地方：如果找不到指定的exchange，就会报错。但routing key找不到的话，不会报错，这条消息会直接丢失，所以此处要小心,auto-delete:自动删除，如果为Yes，则该交换机所有队列queue删除后，自动删除交换机，默认为false
+    -->
+    <rabbit:direct-exchange name="Email_direct" durable="true" auto-delete="false" id="test-mq-exchange">
+        <rabbit:bindings>
+            <!--绑定队列 队列名称为sendRegirectOKEmail-->
+            <rabbit:binding queue="sendEmail" key="sendRegirectOKEmail"/>
+        </rabbit:bindings>
+    </rabbit:direct-exchange>
+
+
+    <!--解析json ， MQ会自动将数据转换成json字符串-->
+    <bean id="jackson2JsonMessageConverter" class="org.springframework.amqp.support.converter.Jackson2JsonMessageConverter"/>
+    <!--模版对象 用于发送消息-->
+    <rabbit:template id="amqpTemplate"  exchange="Email_direct"  connection-factory="connectionFactory"  message-converter="jackson2JsonMessageConverter"  />
+
+
+
+</beans>
