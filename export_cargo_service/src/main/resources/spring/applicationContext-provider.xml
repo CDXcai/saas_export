@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+    <!--整合spring和dubbo的服务提供者-->
+
+    <!--1.配置应用名称-->
+    <dubbo:application name="export_cargo_service"></dubbo:application>
+
+    <!--2.配置注册中心-->
+    <dubbo:registry address="zookeeper://192.168.73.196:2181"></dubbo:registry>
+
+    <!--3.配置协议类型
+        传输的协议dubbo
+        端口：从20881开始
+    -->
+    <dubbo:protocol name="dubbo" port="20882"></dubbo:protocol>
+
+    <!--4.配置dubbo注解的包扫描-->
+    <dubbo:annotation package="com.cdx.service"></dubbo:annotation>
+</beans>

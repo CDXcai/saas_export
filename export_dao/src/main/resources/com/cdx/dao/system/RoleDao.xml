@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cdx.dao.system.RoleDao">
+    <resultMap id="BaseResultMap" type="com.cdx.domain.system.Role">
+        <id column="role_id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="remark" property="remark"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="company_id" property="companyId"/>
+        <result column="company_name" property="companyName"/>
+    </resultMap>
+
+    <select id="findAll" parameterType="string" resultMap="BaseResultMap">
+        select * from pe_role where company_id=#{companyId}
+    </select>
+
+    <select id="findById" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select * from pe_role where role_id = #{id}
+    </select>
+
+    <delete id="delete" parameterType="java.lang.String">
+        delete from pe_role where role_id = #{id}
+    </delete>
+
+    <insert id="save" parameterType="com.cdx.domain.system.Role">
+        insert into pe_role (role_id, name, remark, order_no,company_id, company_name)
+        values (#{id}, #{name}, #{remark}, #{orderNo}, #{companyId}, #{companyName})
+    </insert>
+
+    <update id="update" parameterType="com.cdx.domain.system.Role">
+        update pe_role
+        set name = #{name},
+          remark = #{remark},
+          order_no = #{orderNo}
+        where role_id = #{id}
+    </update>
+
+    <!--// 查询用户拥有的角色信息
+    List<Role> findByUserId(String id);-->
+    <select id="findByUserId" resultMap="BaseResultMap">
+        SELECT * FROM pe_role WHERE role_id IN
+(SELECT role_id FROM pe_role_user WHERE user_id = #{id})
+    </select>
+</mapper>

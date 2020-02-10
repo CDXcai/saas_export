@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns:te="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!--配置扫描包-->
+    <context:component-scan base-package="com.cdx"></context:component-scan>
+    <!--配置驱动-->
+    <mvc:annotation-driven></mvc:annotation-driven>
+
+    <!--整合spring和dubbo的服务提供者-->
+
+    <!--1.配置应用名称-->
+    <dubbo:application name="export_company_service"></dubbo:application>
+
+    <!--2.配置注册中心-->
+    <dubbo:registry address="zookeeper://192.168.73.195:2181"></dubbo:registry>
+
+    <!--3.配置协议类型
+        传输的协议dubbo
+        端口：从20881开始
+    -->
+    <dubbo:protocol name="dubbo" port="20881"></dubbo:protocol>
+
+    <!--4.配置dubbo注解的包扫描-->
+    <dubbo:annotation package="com.cdx.service"></dubbo:annotation>
+
+    <!-- 声明需要暴露的服务接口 -->
+    <!--<dubbo:service interface="com.cdx.service.company.CompanyService" ref="demoService" />-->
+
+
+
+    <!--配置事务，增强方法-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <!--注入数据源-->
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+
+    <!--配置数据源-->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"></property>
+        <property name="url" value="jdbc:mysql://localhost:3306/saas-export"></property>
+        <property name="username" value="root"></property>
+        <property name="password" value="root"></property>
+    </bean>
+    <!--配置增强的规则-->
+    <te:advice id="MyAdvice">
+        <te:attributes>
+            <!--如果是查询，则设置为只读，事务传播行为为可以有事务（如果存在一个事务，则加入到当前事务。如果没有事务则非事务运行。）-->
+            <te:method name="find*" read-only="true" propagation="SUPPORTS"/>
+            <te:method name="select*" read-only="true" propagation="SUPPORTS"></te:method>
+            <te:method name="query*" read-only="true" propagation="SUPPORTS"></te:method>
+
+            <!--如果不是查询，则设置为读写，必须有事务存在-->
+            <te:method name="*" read-only="false" propagation="REQUIRED"></te:method>
+        </te:attributes>
+    </te:advice>
+    <!--配置切面增强-->
+    <aop:config>
+        <!--配置公共的切点-->
+        <aop:pointcut id="myPointcut" expression="execution(* com.cdx.service.*.*.*(..))"></aop:pointcut>
+        <!--配置增强-->
+        <aop:advisor advice-ref="MyAdvice" pointcut-ref="myPointcut"></aop:advisor>
+    </aop:config>
+
+</beans>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--接口的动态代理方式 namespace="接口的全限定类名"-->
+<mapper namespace="com.cdx.dao.stat.StatDao">
+    <!--//获取生产厂家的统计数据-->
+    <!--List<Map> findFactoryData(String companyId) ;-->
+    <select id="findFactoryData" resultType="map" parameterType="string">
+        SELECT SUM(cnumber) value ,factory_name name FROM co_contract_product WHERE company_id = #{companyId} GROUP BY factory_name
+    </select>
+
+    <!--//获取产品销量排行榜的数据
+    List<Map> findSellData(String companyId) ;-->
+    <select id="findSellData" resultType="map" parameterType="string">
+SELECT SUM(amount) AS value ,product_no AS name FROM co_contract_product WHERE company_id = #{companyId} GROUP BY product_no ORDER BY VALUE DESC LIMIT 0 , 10;
+    </select>
+
+    <!--//系统访问压力图的数据
+    List<Map> findOnlineData(String companyId) ;-->
+    <select id="findOnlineData" resultType="map" parameterType="string">
+        SELECT so.a1 NAME,IFNULL(ss.COUNT,"0") VALUE FROM st_online_info so LEFT JOIN
+(SELECT COUNT(id) COUNT,DATE_FORMAT(TIME,"%H") tim FROM st_sys_log WHERE company_id =#{companyId}  GROUP BY tim) ss ON so.a1 = ss.tim
+    </select>
+</mapper>

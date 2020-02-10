@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/rabbit http://www.springframework.org/schema/rabbit/spring-rabbit.xsd">
+
+    <!--连接工厂-->
+    <bean id="connectionFactory"  class="org.springframework.amqp.rabbit.connection.CachingConnectionFactory">
+        <!--<constructor-arg value="${mq.vhost}" />-->
+        <property name="virtualHost" value="testhosts"></property>
+        <!-- username,访问RabbitMQ服务器的账户,默认是guest -->
+        <property name="username" value="admin" />
+        <!-- username,访问RabbitMQ服务器的密码,默认是guest -->
+        <property name="password" value="admin" />
+        <!-- host,RabbitMQ服务器地址，默认值"localhost" -->
+        <property name="host" value="127.0.0.1" />
+        <!-- port，RabbitMQ服务端口，默认值为5672 -->
+        <property name="port" value="5672" />
+    </bean>
+    <!--定义mq管理工厂-->
+    <rabbit:admin connection-factory="connectionFactory" />
+
+    <!--声明队列  和队列的名称-->
+    <rabbit:queue name="sendEmailQueue" auto-declare="true" durable="true" />
+    <!-- 消费者部分 -->
+    <!-- 自定义接口类 -->
+    <bean id="testHandler" class="com.cdx.listener.MailMessageListener"></bean>
+
+    <!--解析json-->
+    <bean id="jackson2JsonMessageConverter" class="org.springframework.amqp.support.converter.Jackson2JsonMessageConverter"/>
+
+    <!-- 配置监听acknowledeg="manual"设置手动应答，它能够保证即使在一个worker处理消息的时候用CTRL+C来杀掉这个worker，或者一个consumer挂了(channel关闭了、connection关闭了或者TCP连接断了)，也不会丢失消息。因为RabbitMQ知道没发送ack确认消息导致这个消息没有被完全处理，将会对这条消息做re-queue处理。如果此时有另一个consumer连接，消息会被重新发送至另一个consumer会一直重发,直到消息处理成功,监听容器acknowledge="auto" concurrency="30"设置发送次数,最多发送30次 -->
+    <rabbit:listener-container connection-factory="connectionFactory" acknowledge="auto" concurrency="20">
+        <rabbit:listener queues="sendEmailQueue" ref="testHandler"  />
+    </rabbit:listener-container>
+</beans>

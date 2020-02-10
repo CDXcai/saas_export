@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+    <!--配置spring的IOC环境-->
+    <!--报扫描
+        * 容器启动的时候，根据配置找到相应的注解，将对象保存到容器中
+    -->
+    <context:component-scan base-package="com.cdx.service"></context:component-scan>
+
+
+    <!--引入其他的配置文件
+        <import resource="applicationContext-dao.xml"></import>
+    -->
+
+
+    <!--配置事务 ： 基于xml的配置-->
+    <!--1.事务管理器-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+
+    <!--2.事务通知-->
+    <tx:advice id="txAdvice">
+        <tx:attributes>
+            <!--配置不同方法对事务要求-->
+            <tx:method name="save*" read-only="false" propagation="REQUIRED"/>
+            <tx:method name="update*"/>
+            <tx:method name="delete*"/>
+            <tx:method name="find*" read-only="true" propagation="SUPPORTS"/>
+            <tx:method name="*"></tx:method>
+        </tx:attributes>
+    </tx:advice>
+
+    <!--3.事务AOP切面-->
+    <aop:config>
+        <!--切入点表达式：定位类和方法-->
+        <aop:pointcut id="pt" expression="execution(* com.cdx.service.*.*.*(..))"></aop:pointcut>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="pt"></aop:advisor>
+    </aop:config>
+</beans>
